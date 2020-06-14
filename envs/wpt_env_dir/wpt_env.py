@@ -35,14 +35,13 @@ class WPTEnv(discrete.DiscreteEnv):
         Observation:
             Type: Box(6 or 8)
             Num Observation                                    Min      Max
-            0   User1 server X                                 -r       r
-            1   User1 server Y                                 -r       r
-            2   User2 server X                                 isd-r    isd+r
-            3   User2 server Y                                 -r       r
-            4   Serving BS Power                               5        40W
-            5   Neighbor BS power                              5        40W
-            6   BF codebook index for Serving                  0        M-1
-            7   BF codebook index for Neighbor                 0        M-1
+            0   received energy on receiver 1                 -1w       1w
+            1   received energy on receiver 2                 -1w       1w
+            .          .                                        .        .
+            k-1 received energy on receiver k                 -1w       1w
+            k   choise made by transmitter1                     0        3
+            k+1   choice made by transmitter2                   0        3
+            k+2   choice made by transmitter3                   0        3
 
     '''
     metadata={'render.modes':['human']}
@@ -58,9 +57,24 @@ class WPTEnv(discrete.DiscreteEnv):
         print(self.receiver_position)
         self.code_book=build_code_book(self.M, self.N,self.f_c)
         print(self.code_book)
-        nA=8
-        nS=9
+        self.num_actions=8
+        bound_lower=[]
+        bound_higher=[]
+        for i in range(self.K):
+            bound_lower.append(-1)
+            bound_higher.append(1)
+        for j in range(self.L):
+            bound_lower.append(0)
+            bound_higher.append(3)
+        bounds_lower = np.array(bound_lower)
+        bounds_upper = np.array(bound_higher)
 
+        self.action_space = spaces.Discrete(self.num_actions) # action size is here
+        self.observation_space = spaces.Box(bounds_lower, bounds_upper, dtype=np.float32) # spaces.Discrete(2) # state size is here
+
+        self.seed(seed=1)
+
+        self.state = None
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
